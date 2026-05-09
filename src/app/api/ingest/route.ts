@@ -1,9 +1,9 @@
+import { buildTimelineWithAI } from '@/lib/build-timeline';
 import { fetchCommits, sampleArchitecture } from '@/lib/github';
 import { storeRepoMemories } from '@/lib/hydra';
 import { resolveIngestCommitLimit } from '@/lib/ingest-config';
 import { parseGitHubUrl } from '@/lib/parse-github-url';
 import { repoIndex } from '@/lib/store';
-import type { TimelineEvent } from '@/types';
 
 export async function POST(req: Request) {
   let body: { url?: string; maxCommits?: unknown };
@@ -53,10 +53,20 @@ export async function POST(req: Request) {
         });
         const archSnapshots = await sampleArchitecture(owner, repo, commits, 5);
 
-        send({ type: 'progress', message: 'Storing memories in HydraDB...', pct: 80 });
-        await storeRepoMemories(subTenantId, commits, [], archSnapshots);
+        send({ type: 'progress', message: 'AI is building timeline...', pct: 60 });
+        let timeline: import('@/types').TimelineEvent[] = [];
+        try {
+          timeline = await buildTimelineWithAI(commits, [], archSnapshots);
+        } catch (err) {
+          console.warn('[ingest] buildTimelineWithAI failed, using empty timeline:', err);
+        }
 
-        const timeline: TimelineEvent[] = [];
+        send({ type: 'progress', message: 'Storing memories in HydraDB...', pct: 80 });
+        try {
+          await storeRepoMemories(subTenantId, commits, [], archSnapshots);
+        } catch (err) {
+          console.warn('[ingest] HydraDB storage failed (non-fatal):', err);
+        }
 
         repoIndex.set(url, {
           repoId: subTenantId,

@@ -21,18 +21,24 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Repo not indexed' }, { status: 404 });
   }
 
-  let contextBlock: string;
+  let contextBlock = '';
   try {
     const recalled = await recallForQuery(index.repoId, question);
     console.log(`[query] HydraDB returned ${recalled.chunks.length} chunks for "${question}"`);
-    contextBlock = recalled.chunks
-      .map(
-        (c) =>
-          `[${c.source_title} | score: ${c.relevancy_score.toFixed(2)}]\n${c.chunk_content}`
-      )
-      .join('\n\n---\n\n');
+    if (recalled.chunks.length > 0) {
+      contextBlock = recalled.chunks
+        .map(
+          (c) =>
+            `[${c.source_title} | score: ${c.relevancy_score.toFixed(2)}]\n${c.chunk_content}`
+        )
+        .join('\n\n---\n\n');
+    }
   } catch (err) {
-    console.warn('[query] HydraDB recall failed, using timeline fallback:', err);
+    console.warn('[query] HydraDB recall failed:', err);
+  }
+
+  if (!contextBlock && index.timeline.length > 0) {
+    console.log('[query] Using timeline fallback for context');
     contextBlock = index.timeline
       .map(
         (evt) =>

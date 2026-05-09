@@ -6,9 +6,9 @@ interface ChatMessage {
   content: string;
 }
 
-export async function pipeshiftChat(
+async function pipeshiftFetch(
   messages: ChatMessage[],
-  stream = false
+  stream: boolean
 ): Promise<Response> {
   const res = await fetch(PIPESHIFT_URL, {
     method: 'POST',
@@ -20,11 +20,29 @@ export async function pipeshiftChat(
       model: PIPESHIFT_MODEL,
       messages,
       temperature: 0.3,
+      max_tokens: 8192,
       stream,
     }),
   });
-  if (!res.ok) throw new Error(`Pipeshift ${res.status}: ${await res.text()}`);
   return res;
+}
+
+export async function pipeshiftChat(
+  messages: ChatMessage[],
+  stream = false
+): Promise<Response> {
+  const maxRetries = 2;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const res = await pipeshiftFetch(messages, stream);
+    if (res.ok) return res;
+    if (res.status >= 500 && attempt < maxRetries) {
+      console.warn(`[pipeshift] ${res.status} on attempt ${attempt + 1}, retrying in 2s...`);
+      await new Promise((r) => setTimeout(r, 2000));
+      continue;
+    }
+    throw new Error(`Pipeshift ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  }
+  throw new Error('Pipeshift: exhausted retries');
 }
 
 export async function pipeshiftComplete(
@@ -32,5 +50,10 @@ export async function pipeshiftComplete(
 ): Promise<string> {
   const res = await pipeshiftChat(messages, false);
   const data = await res.json();
-  return data.choices[0].message.content as string;
+  const content = data.choices?.[0]?.message?.content;
+  if (content == null) {
+    console.error('[pipeshift] Unexpected response shape:', JSON.stringify(data).slice(0, 500));
+    throw new Error('Pipeshift returned empty content');
+  }
+  return content;
 }
