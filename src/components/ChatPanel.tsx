@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Message } from '../types';
 
 interface ChatPanelProps {
@@ -56,13 +58,45 @@ export default function ChatPanel({ messages, onSendMessage, isLoading }: ChatPa
         ) : (
           messages.map((msg, idx) => (
             <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] rounded-xl px-4 py-3 ${
+              <div className={`max-w-[85%] rounded-xl px-4 py-3 ${
                 msg.role === 'user' 
                   ? 'bg-blue-600 text-white rounded-br-none shadow-sm' 
                   : 'bg-gray-100 text-gray-800 rounded-bl-none shadow-sm'
               }`}>
-                {/* Note: In a future step, we can drop in react-markdown here */}
-                <p className="whitespace-pre-wrap text-[15px] leading-relaxed">{msg.content}</p>
+                {msg.role === 'user' ? (
+                  <p className="whitespace-pre-wrap text-[15px] leading-relaxed">{msg.content}</p>
+                ) : (
+                  <div className="text-[15px] leading-relaxed break-words">
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        p: ({node: _, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
+                        ul: ({node: _, ...props}) => <ul className="list-disc pl-4 mb-2" {...props} />,
+                        ol: ({node: _, ...props}) => <ol className="list-decimal pl-4 mb-2" {...props} />,
+                        li: ({node: _, ...props}) => <li className="mb-1" {...props} />,
+                        strong: ({node: _, ...props}) => <strong className="font-semibold text-gray-900" {...props} />,
+                        code: ({node: _, className, children, ...props}) => {
+                          const match = /language-(\w+)/.exec(className || '');
+                          const isInline = !match && !className?.includes('language-');
+                          return isInline ? (
+                            <code className="bg-gray-200 px-1 py-0.5 rounded text-sm font-mono text-gray-800" {...props}>
+                              {children}
+                            </code>
+                          ) : (
+                            <pre className="bg-gray-800 text-gray-100 p-3 rounded-lg overflow-x-auto text-sm my-2">
+                              <code className={className} {...props}>
+                                {children}
+                              </code>
+                            </pre>
+                          );
+                        },
+                        a: ({node: _, ...props}) => <a className="text-blue-600 hover:underline" target="_blank" rel="noreferrer" {...props} />
+                      }}
+                    >
+                      {msg.content}
+                    </ReactMarkdown>
+                  </div>
+                )}
               </div>
             </div>
           ))
