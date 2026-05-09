@@ -42,7 +42,7 @@ export default function TimelineScrubber({
   const highlightSet = new Set(highlightedIndices);
 
   return (
-    <section aria-labelledby={`${inputId}-label`} className="space-y-6">
+    <section aria-labelledby={`${inputId}-label`} className="sticky top-0 z-40 bg-zinc-950 py-4 pb-6 shadow-[0_16px_16px_-16px_rgba(0,0,0,0.8)] -mx-6 px-6 sm:-mx-10 sm:px-10 mt-[-1rem]">
       <div className="flex items-end justify-between gap-6">
         <div>
           <p className="eyebrow">02 / Scrub</p>

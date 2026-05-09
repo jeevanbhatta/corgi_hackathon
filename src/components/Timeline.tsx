@@ -153,7 +153,7 @@ export default function Timeline({
         </dl>
       </header>
 
-      <div className="mt-16 space-y-20">
+      <div className="mt-12 space-y-20 relative">
         <TimelineScrubber
           frames={frames}
           activeIndex={activeIndex}
