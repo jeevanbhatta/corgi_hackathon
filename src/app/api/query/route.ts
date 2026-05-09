@@ -26,10 +26,14 @@ export async function POST(req: Request) {
     const recalled = await recallForQuery(index.repoId, question);
     console.log(`[query] HydraDB returned ${recalled.chunks.length} chunks for "${question}"`);
     contextBlock = recalled.chunks
-      .map(
-        (c) =>
-          `[${c.source_title} | score: ${c.relevancy_score.toFixed(2)}]\n${c.chunk_content}`
-      )
+      .map((c) => {
+        const title = c.source_title ?? 'memory';
+        const score =
+          typeof c.relevancy_score === 'number' && !Number.isNaN(c.relevancy_score)
+            ? c.relevancy_score.toFixed(2)
+            : '?';
+        return `[${title} | score: ${score}]\n${c.chunk_content}`;
+      })
       .join('\n\n---\n\n');
   } catch (err) {
     console.warn('[query] HydraDB recall failed, using timeline fallback:', err);
