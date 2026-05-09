@@ -72,7 +72,7 @@ ARCHITECTURE SNAPSHOTS:
 ${archSnapshots
   .map(
     (s) =>
-      `${s.date}: dirs=[${s.directories.slice(0, 10).join(',')}] deps=${Object.keys(s.packageJson?.dependencies || {}).join(',')}`
+      `${s.date}: dirs=[${s.directories.slice(0, 10).join(',')}] deps=${Object.keys(s.packageJson?.dependencies || {}).slice(0, 15).join(',')}`
   )
   .join('\n')}
 
@@ -90,6 +90,8 @@ Return JSON array matching this shape exactly:
     },
   ];
 
+  const promptSize = messages.reduce((n, m) => n + m.content.length, 0);
+  console.log(`[buildTimeline] Sending ${promptSize} chars to Pipeshift...`);
   const upstream = await pipeshiftChat(messages, true);
   const content = await collectStream(upstream);
 

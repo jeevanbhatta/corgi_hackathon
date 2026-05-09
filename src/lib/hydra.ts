@@ -63,7 +63,7 @@ Entry points: ${s.entryPoints.join(', ')}`,
 
 export async function recallForQuery(subTenantId: string, query: string) {
   const tenant_id = process.env.HYDRADB_TENANT_ID!;
-  const res = await fetch(`${BASE}/recall/full_recall`, {
+  const res = await fetch(`${BASE}/recall/recall_preferences`, {
     method: 'POST',
     headers: headers(),
     body: JSON.stringify({

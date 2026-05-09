@@ -26,7 +26,7 @@ export default function Home() {
       const res = await fetch('/api/ingest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url }), // maxCommits could be passed here
+        body: JSON.stringify({ url, maxCommits: 5 }),
       });
 
       if (!res.body) throw new Error('No body returned from API');
