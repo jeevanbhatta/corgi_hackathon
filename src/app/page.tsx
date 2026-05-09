@@ -54,7 +54,8 @@ export default function Home() {
       };
       setChatHistory((prev) => [...prev, assistantMsg]);
       setIsChatLoading(false);
-      setHighlightedShas(['mock-sha-123']);
+      // Using a real mock SHA from lib/mock-data.ts so it visibly highlights a commit in the built-in Timeline
+      setHighlightedShas(['bd7ec34df0617e67d1bd072b83303a671f2f8011']);
     }, 1500);
   };
 
