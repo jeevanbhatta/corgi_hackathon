@@ -46,7 +46,17 @@ export interface RepoIndex {
   owner: string;
   repo: string;
   timeline: TimelineEvent[];
+  archSnapshots: ArchitectureSnapshot[];
   indexedAt: string;
+}
+
+/** Response shape for GET /api/diff */
+export interface ArchDiff {
+  addedDirs: string[];
+  removedDirs: string[];
+  addedDeps: Record<string, string>;
+  removedDeps: Record<string, string>;
+  changedDeps: Record<string, { before: string; after: string }>;
 }
 
 export interface RepositoryMeta {
