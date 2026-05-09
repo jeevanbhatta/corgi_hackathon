@@ -37,7 +37,7 @@ export default function ChatPanel({ messages, onSendMessage, isLoading }: ChatPa
       <div className="flex-1 overflow-y-auto w-full p-6 space-y-4">
         {messages.length === 0 ? (
           <div className="text-center w-full h-full flex flex-col justify-center items-center text-gray-500">
-            <p className="mb-4">Ask anything about the repository's history, architecture, or specific commits.</p>
+            <p className="mb-4">Ask anything about the repository&apos;s history, architecture, or specific commits.</p>
             <div className="flex flex-wrap gap-2 justify-center">
               <button 
                 onClick={() => setInput("What are the major architectural shifts in this repo?")} 
