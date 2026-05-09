@@ -5,27 +5,31 @@ import URLInput from '@/components/URLInput';
 import IngestionProgress from '@/components/IngestionProgress';
 import Timeline from '@/components/Timeline';
 import ChatPanel from '@/components/ChatPanel';
-import { TimelineEvent, Message } from '@/types';
+import { mockRepoMeta, mockTimelineEvents } from '@/lib/mock-data';
+import type { Message } from '@/types';
 
 export default function Home() {
   const [phase, setPhase] = useState<'input' | 'loading' | 'timeline'>('input');
   const [progress, setProgress] = useState({ message: '', pct: 0 });
-  const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [repoId, setRepoId] = useState('');
   const [highlightedShas, setHighlightedShas] = useState<string[]>([]);
   const [chatHistory, setChatHistory] = useState<Message[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
 
-  const handleURLSubmit = (url: string, owner: string, repo: string) => {
+  const handleURLSubmit = (_url: string, owner: string, repo: string) => {
     setRepoId(`${owner}/${repo}`);
     setPhase('loading');
-    
-    // Mock ingestion process
+
     let pct = 0;
-    const stages = ['Cloning repository...', 'Extracting commits...', 'Building timeline...', 'Finalizing...'];
-    
+    const stages = [
+      'Cloning repository...',
+      'Extracting commits...',
+      'Building timeline...',
+      'Finalizing...',
+    ];
+
     setProgress({ message: stages[0], pct: 0 });
-    
+
     const interval = setInterval(() => {
       pct += 12;
       if (pct >= 100) {
@@ -40,19 +44,16 @@ export default function Home() {
 
   const handleSendMessage = (content: string) => {
     const userMsg: Message = { role: 'user', content };
-    setChatHistory(prev => [...prev, userMsg]);
+    setChatHistory((prev) => [...prev, userMsg]);
     setIsChatLoading(true);
 
-    // Mock chat response
     setTimeout(() => {
-      const assistantMsg: Message = { 
-        role: 'assistant', 
-        content: `I found some relevant history regarding your question: "${content}". I've highlighted the crucial commits on your timeline.`
+      const assistantMsg: Message = {
+        role: 'assistant',
+        content: `I found some relevant history regarding your question: "${content}". I've highlighted the crucial commits on your timeline.`,
       };
-      setChatHistory(prev => [...prev, assistantMsg]);
+      setChatHistory((prev) => [...prev, assistantMsg]);
       setIsChatLoading(false);
-      
-      // Mock setting highlighted SHAs for the timeline
       setHighlightedShas(['mock-sha-123']);
     }, 1500);
   };
@@ -64,29 +65,34 @@ export default function Home() {
           <URLInput onSubmit={handleURLSubmit} />
         </div>
       )}
-      
+
       {phase === 'loading' && (
         <div className="flex flex-col items-center justify-center flex-1">
-           <IngestionProgress progress={progress.pct} status={progress.message} />
+          <IngestionProgress progress={progress.pct} status={progress.message} />
         </div>
       )}
-      
+
       {phase === 'timeline' && (
         <div className="flex flex-1 gap-6 w-full max-w-[1600px] mx-auto h-[calc(100vh-6rem)]">
           <div className="flex-1 bg-zinc-900 rounded-xl border border-zinc-800 p-6 overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">{repoId} Timeline</h2>
-            <Timeline />
+            <Timeline
+              events={mockTimelineEvents}
+              repoMeta={mockRepoMeta}
+              highlightedShas={highlightedShas}
+              onAskAboutEvent={(event) => setHighlightedShas([event.commitSha])}
+            />
             <div className="mt-8 text-zinc-500 text-sm">
               Highlighted SHAs (Mocked): {highlightedShas.join(', ')}
             </div>
           </div>
-          
+
           <div className="w-[450px]">
-             <ChatPanel 
-               messages={chatHistory} 
-               onSendMessage={handleSendMessage} 
-               isLoading={isChatLoading} 
-             />
+            <ChatPanel
+              messages={chatHistory}
+              onSendMessage={handleSendMessage}
+              isLoading={isChatLoading}
+            />
           </div>
         </div>
       )}
