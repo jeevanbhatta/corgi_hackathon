@@ -5,58 +5,147 @@ import URLInput from '@/components/URLInput';
 import IngestionProgress from '@/components/IngestionProgress';
 import Timeline from '@/components/Timeline';
 import ChatPanel from '@/components/ChatPanel';
-import { mockRepoMeta, mockTimelineEvents } from '@/lib/mock-data';
-import type { Message } from '@/types';
+import type { TimelineEvent, Message, RepositoryMeta } from '@/types';
 
 export default function Home() {
   const [phase, setPhase] = useState<'input' | 'loading' | 'timeline'>('input');
   const [progress, setProgress] = useState({ message: '', pct: 0 });
   const [repoId, setRepoId] = useState('');
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
+  const [repoMeta, setRepoMeta] = useState<RepositoryMeta | undefined>();
   const [highlightedShas, setHighlightedShas] = useState<string[]>([]);
   const [chatHistory, setChatHistory] = useState<Message[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
 
-  const handleURLSubmit = (_url: string, owner: string, repo: string) => {
-    setRepoId(`${owner}/${repo}`);
+  const handleURLSubmit = async (url: string, owner: string, repo: string) => {
+    setRepoId(`${owner}_${repo}`);
     setPhase('loading');
+    setProgress({ message: 'Starting ingestion...', pct: 0 });
 
-    let pct = 0;
-    const stages = [
-      'Cloning repository...',
-      'Extracting commits...',
-      'Building timeline...',
-      'Finalizing...',
-    ];
+    try {
+      const res = await fetch('/api/ingest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }), // maxCommits could be passed here
+      });
 
-    setProgress({ message: stages[0], pct: 0 });
+      if (!res.body) throw new Error('No body returned from API');
 
-    const interval = setInterval(() => {
-      pct += 12;
-      if (pct >= 100) {
-        clearInterval(interval);
-        setPhase('timeline');
-      } else {
-        const stageIndex = Math.min(Math.floor(pct / 25), stages.length - 1);
-        setProgress({ message: stages[stageIndex], pct });
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith('data: ')) continue;
+
+          try {
+            const data = JSON.parse(trimmed.slice(6));
+            if (data.type === 'progress') {
+              setProgress({ message: data.message, pct: data.pct || 0 });
+            } else if (data.type === 'done') {
+              if (data.repoId) setRepoId(data.repoId);
+              setTimelineEvents(data.timeline || []);
+              setRepoMeta({
+                name: repo,
+                fullName: `${owner}/${repo}`,
+                indexedAt: new Date().toISOString(),
+                // Mock stars and language for now if API doesn't provide them yet
+                stars: 0,
+                language: 'Mixed',
+              });
+              setPhase('timeline');
+            } else if (data.type === 'error') {
+              setProgress({ message: `Error: ${data.message}`, pct: 0 });
+              console.error('Ingest error:', data.message);
+            }
+          } catch (e) {
+            // Ignore malformed JSON chunks
+          }
+        }
       }
-    }, 400);
+    } catch (err) {
+      console.error(err);
+      setProgress({ message: 'Failed to connect to ingestion server.', pct: 0 });
+      setTimeout(() => setPhase('input'), 3000);
+    }
   };
 
-  const handleSendMessage = (content: string) => {
+  const handleSendMessage = async (content: string) => {
     const userMsg: Message = { role: 'user', content };
     setChatHistory((prev) => [...prev, userMsg]);
     setIsChatLoading(true);
 
-    setTimeout(() => {
-      const assistantMsg: Message = {
-        role: 'assistant',
-        content: `I found some relevant history regarding your question: "${content}". I've highlighted the crucial commits on your timeline.`,
-      };
-      setChatHistory((prev) => [...prev, assistantMsg]);
+    try {
+      const res = await fetch('/api/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          repoId,
+          question: content,
+          conversationHistory: chatHistory,
+        }),
+      });
+
+      if (!res.body) throw new Error('No body returned');
+
+      // Add a placeholder message for the assistant output
+      setChatHistory((prev) => [...prev, { role: 'assistant', content: '' }]);
       setIsChatLoading(false);
-      // Using a real mock SHA from lib/mock-data.ts so it visibly highlights a commit in the built-in Timeline
-      setHighlightedShas(['bd7ec34df0617e67d1bd072b83303a671f2f8011']);
-    }, 1500);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let assistantContent = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        assistantContent += decoder.decode(value, { stream: true });
+        setChatHistory((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1].content = assistantContent;
+          return updated;
+        });
+      }
+
+      // 1. Attempt to extract the trailing JSON block requested in query route prompt
+      const jsonMatch = assistantContent.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[1]);
+          if (parsed.highlightShas && Array.isArray(parsed.highlightShas)) {
+            setHighlightedShas(parsed.highlightShas);
+          }
+          
+          // Optionally hidden from the user by updating the final message to strip the json
+          const cleanedContent = assistantContent.replace(/```json\s*\{[\s\S]*?\}\s*```/, '').trim();
+          setChatHistory((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1].content = cleanedContent;
+            return updated;
+          });
+        } catch (e) {
+          // JSON parse failed
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      setChatHistory((prev) => [
+        ...prev,
+        { role: 'assistant', content: 'An error occurred while fetching the response.' }
+      ]);
+    } finally {
+      setIsChatLoading(false);
+    }
   };
 
   return (
@@ -76,15 +165,15 @@ export default function Home() {
       {phase === 'timeline' && (
         <div className="flex flex-1 gap-6 w-full max-w-[1600px] mx-auto h-[calc(100vh-6rem)]">
           <div className="flex-1 bg-zinc-900 rounded-xl border border-zinc-800 p-6 overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">{repoId} Timeline</h2>
+            <h2 className="text-xl font-bold mb-4">{repoId.replace('_', '/')} Timeline</h2>
             <Timeline
-              events={mockTimelineEvents}
-              repoMeta={mockRepoMeta}
+              events={timelineEvents}
+              repoMeta={repoMeta}
               highlightedShas={highlightedShas}
               onAskAboutEvent={(event) => setHighlightedShas([event.commitSha])}
             />
             <div className="mt-8 text-zinc-500 text-sm">
-              Highlighted SHAs (Mocked): {highlightedShas.join(', ')}
+              Highlighted SHAs: {highlightedShas.join(', ')}
             </div>
           </div>
 
