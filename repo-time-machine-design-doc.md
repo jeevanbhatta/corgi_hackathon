@@ -1,4 +1,4 @@
-# Repo Time Machine — Hackathon Design Document
+# RepoPlay — Hackathon Design Document
 **Status:** 3 hours to demo | **Stack:** Next.js + Pipeshift (DeepSeek-V4-Pro) + GitHub API + HydraDB
 
 ---

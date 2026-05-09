@@ -24,9 +24,9 @@ const ebGaramond = EB_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "Repo Time Machine",
+  title: "RepoPlay",
   description:
-    "Scrub through a repository's history and watch its architecture, dependencies, and intent evolve.",
+    "RepoPlay: scrub through a repository's history and watch its architecture, dependencies, and intent evolve.",
 };
 
 export default function RootLayout({

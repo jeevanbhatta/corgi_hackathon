@@ -91,10 +91,10 @@ const memoryArchitecture = {
 };
 
 export const mockRepoMeta: RepositoryMeta = {
-  name: 'repo-time-machine',
+  name: 'repoplay',
   owner: 'corgi-labs',
-  fullName: 'corgi-labs/repo-time-machine',
-  url: 'https://github.com/corgi-labs/repo-time-machine',
+  fullName: 'corgi-labs/repoplay',
+  url: 'https://github.com/corgi-labs/repoplay',
   stars: 1284,
   language: 'TypeScript',
   indexedAt: '2024-03-21T21:18:00.000Z',

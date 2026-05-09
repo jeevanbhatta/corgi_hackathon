@@ -115,7 +115,7 @@ export default function Timeline({
   if (frames.length === 0) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-20">
-        <p className="eyebrow">Repo Time Machine</p>
+        <p className="eyebrow">RepoPlay</p>
         <h1 className="mt-3 text-3xl font-medium text-ink">No events to scrub through yet.</h1>
         <p className="mt-4 max-w-prose text-sm text-ink-muted">
           Once ingestion is wired in, paste a repository URL and the timeline will populate. While
@@ -133,7 +133,7 @@ export default function Timeline({
     <main className="mx-auto max-w-5xl px-6 pb-32 pt-12 sm:px-10">
       <header className="grid gap-10 border-b border-rule pb-12 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
         <div className="min-w-0">
-          <p className="eyebrow">01 / Repo Time Machine</p>
+          <p className="eyebrow">01 / RepoPlay</p>
           <h1 className="mt-4 text-4xl font-medium leading-[1.05] tracking-tight text-ink sm:text-5xl">
             {repoMeta?.fullName ?? repoMeta?.name ?? 'Repository timeline'}
           </h1>
@@ -177,7 +177,7 @@ export default function Timeline({
 
       <footer className="mt-24 flex items-center justify-between border-t border-rule pt-6 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-faint">
         <span>← → keys scrub through frames</span>
-        <span>{repoMeta?.fullName ?? 'Repo Time Machine'}</span>
+        <span>{repoMeta?.fullName ?? 'RepoPlay'}</span>
       </footer>
     </main>
   );

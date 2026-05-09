@@ -1,8 +1,8 @@
-# Repo Time Machine
+# RepoPlay
 
 **Turn commit noise into a readable story of how a codebase actually grew.**
 
-When you inherit a project, review unfamiliar code, or need to explain *why* things are the way they are, you usually live in `git log` and hope the narrative appears. Repo Time Machine does that work for a **public GitHub repository**: it rebuilds a timeline of meaningful changes, shows how **folders and dependencies** shifted between those moments, and lets you **chat** with an assistant that reasons over that history—so you can onboard faster, spot when a subsystem got complicated, or brief someone without spending an afternoon in blame view.
+When you inherit a project, review unfamiliar code, or need to explain *why* things are the way they are, you usually live in `git log` and hope the narrative appears. **RepoPlay** does that work for a **public GitHub repository**: it rebuilds a timeline of meaningful changes, shows how **folders and dependencies** shifted between those moments, and lets you **chat** with an assistant that reasons over that history—so you can onboard faster, spot when a subsystem got complicated, or brief someone without spending an afternoon in blame view.
 
 ---
 
