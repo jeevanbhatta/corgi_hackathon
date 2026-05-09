@@ -59,6 +59,16 @@ export interface ArchDiff {
   changedDeps: Record<string, { before: string; after: string }>;
 }
 
+export interface RepositoryMeta {
+  name: string;
+  owner?: string;
+  fullName?: string;
+  url?: string;
+  stars?: number;
+  language?: string;
+  indexedAt?: string;
+}
+
 export interface Message {
   role: 'user' | 'assistant';
   content: string;
