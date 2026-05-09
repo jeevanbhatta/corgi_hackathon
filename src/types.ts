@@ -49,6 +49,16 @@ export interface RepoIndex {
   indexedAt: string;
 }
 
+export interface RepositoryMeta {
+  name: string;
+  owner?: string;
+  fullName?: string;
+  url?: string;
+  stars?: number;
+  language?: string;
+  indexedAt?: string;
+}
+
 export interface Message {
   role: 'user' | 'assistant';
   content: string;
